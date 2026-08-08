@@ -2,8 +2,11 @@ name: Android Build
 
 # Workflow ini SENGAJA tidak butuh repository secret apa pun:
 # - APK ditandatangani pakai debug keystore otomatis (dibuat sendiri oleh AGP saat build).
-# - Wrapper Gradle (termasuk gradle-wrapper.jar) di-generate sendiri di runner lewat
-#   `gradle wrapper`, bukan dari file biner yang di-commit ke repo.
+# - Gradle di-install manual lewat curl+unzip (tidak gantung ke action pihak ketiga),
+#   lalu gradle-wrapper (termasuk gradle-wrapper.jar) di-generate sendiri di runner
+#   lewat `gradle wrapper` — bukan dari file biner yang di-commit ke repo.
+# - SEMUA step nulis log sendiri dan SEMUA log selalu diupload (if: always()),
+#   jadi kalau ada yang gagal, tinggal buka artifact "build-logs" / "diagnostics".
 on:
   push:
     branches: [ "main", "master" ]
@@ -13,6 +16,7 @@ on:
 
 env:
   GRADLE_VERSION: "8.10.2"
+  GRADLE_INSTALL_DIR: "/opt/gradle-cli"
 
 concurrency:
   group: android-build-${{ github.ref }}
@@ -34,42 +38,76 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Accept Android SDK licenses
-        # Supaya AGP bisa auto-download platform/build-tools yang belum ada di runner.
+      - name: Diagnostik awal (versi tool & environment)
         run: |
-          set -e
-          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-          echo "Menggunakan Android SDK di: $SDK_ROOT"
-          CMDLINE_BIN=$(find "$SDK_ROOT/cmdline-tools" -maxdepth 2 -name "sdkmanager" -type f 2>/dev/null | head -n 1)
-          if [ -z "$CMDLINE_BIN" ]; then
-            echo "sdkmanager tidak ditemukan lewat cmdline-tools, coba fallback ke PATH"
-            CMDLINE_BIN="sdkmanager"
-          fi
-          yes | "$CMDLINE_BIN" --licenses > /dev/null || true
-          "$CMDLINE_BIN" --update || true
+          {
+            echo "== java -version =="
+            java -version
+            echo
+            echo "== ANDROID_HOME / ANDROID_SDK_ROOT =="
+            echo "ANDROID_HOME=$ANDROID_HOME"
+            echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+            echo
+            echo "== isi ANDROID SDK root =="
+            ls -la "${ANDROID_SDK_ROOT:-$ANDROID_HOME}" || true
+            echo
+            echo "== cmdline-tools yang tersedia =="
+            find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools" -maxdepth 2 2>/dev/null || true
+          } 2>&1 | tee 00-environment-info.log
 
-      - name: Install Gradle ${{ env.GRADLE_VERSION }}
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
-          cache-read-only: false
+      - name: Terima lisensi Android SDK
+        # Supaya AGP bisa auto-download platform/build-tools yang belum ada di runner.
+        # Tidak fatal kalau gagal (sdkmanager kadang beda lokasi antar image runner),
+        # makanya semua fallback dijaga dengan `|| true` dan tetap dicatat ke log.
+        run: |
+          {
+            set +e
+            SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+            echo "Menggunakan Android SDK di: $SDK_ROOT"
+            CMDLINE_BIN=$(find "$SDK_ROOT/cmdline-tools" -maxdepth 2 -name "sdkmanager" -type f 2>/dev/null | sort -r | head -n 1)
+            if [ -z "$CMDLINE_BIN" ]; then
+              echo "sdkmanager tidak ditemukan lewat cmdline-tools, coba fallback ke PATH"
+              CMDLINE_BIN="sdkmanager"
+            fi
+            echo "Pakai sdkmanager di: $CMDLINE_BIN"
+            yes | "$CMDLINE_BIN" --licenses
+            "$CMDLINE_BIN" --update
+            echo "Selesai (exit code langkah ini tidak menggagalkan build)."
+          } 2>&1 | tee 01-sdk-licenses.log
+          exit 0
+
+      - name: Install Gradle ${{ env.GRADLE_VERSION }} (manual, tanpa action pihak ketiga)
+        run: |
+          {
+            set -euxo pipefail
+            command -v unzip >/dev/null 2>&1 || sudo apt-get update -qq && sudo apt-get install -y -qq unzip
+            curl -fsSL -o /tmp/gradle.zip \
+              "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+            sudo mkdir -p "${GRADLE_INSTALL_DIR}"
+            sudo unzip -q /tmp/gradle.zip -d "${GRADLE_INSTALL_DIR}"
+            echo "${GRADLE_INSTALL_DIR}/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"
+          } 2>&1 | tee 02-install-gradle.log
+
+      - name: Verifikasi Gradle terpasang
+        run: |
+          {
+            echo "== which gradle =="
+            which gradle
+            echo "== gradle -v =="
+            gradle -v
+          } 2>&1 | tee 03-verify-gradle.log
 
       - name: Generate Gradle Wrapper (self-generated, tidak dari file yang di-commit)
         run: |
-          set -e
-          gradle wrapper --gradle-version "${{ env.GRADLE_VERSION }}" --distribution-type bin
-          chmod +x ./gradlew
-          echo "Isi folder gradle/wrapper setelah digenerate:"
-          ls -la gradle/wrapper
-
-      - name: Show environment info (buat debug)
-        run: |
-          echo "== java -version =="
-          java -version
-          echo "== ./gradlew --version =="
-          ./gradlew --version
-          echo "== Android SDK packages terpasang =="
-          ls "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/platforms" || true
+          {
+            set -euxo pipefail
+            gradle wrapper --gradle-version "${GRADLE_VERSION}" --distribution-type bin
+            chmod +x ./gradlew
+            echo "Isi folder gradle/wrapper setelah digenerate:"
+            ls -la gradle/wrapper
+            echo "== ./gradlew --version =="
+            ./gradlew --version
+          } 2>&1 | tee 04-generate-wrapper.log
 
       - name: Build debug APK (dengan logging lengkap)
         id: build_debug
@@ -93,7 +131,29 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          ./gradlew :app:lintDebug --stacktrace 2>&1 | tee gradle-lint.log
+          if [ -f ./gradlew ]; then
+            ./gradlew :app:lintDebug --stacktrace 2>&1 | tee gradle-lint.log
+          else
+            echo "./gradlew tidak ada (step generate wrapper gagal), lint dilewati." | tee gradle-lint.log
+          fi
+
+      - name: Diagnostik akhir (selalu jalan, buat pegangan kalau ada yang gagal)
+        if: always()
+        run: |
+          {
+            echo "== Status tiap step build =="
+            echo "build_debug outcome: ${{ steps.build_debug.outcome }}"
+            echo "build_release outcome: ${{ steps.build_release.outcome }}"
+            echo
+            echo "== Isi direktori kerja =="
+            ls -la
+            echo
+            echo "== gradlew ada? =="
+            ls -la ./gradlew 2>&1 || true
+            echo
+            echo "== Isi app/build/outputs/apk (kalau ada) =="
+            find app/build/outputs/apk -type f 2>&1 || true
+          } 2>&1 | tee 99-final-diagnostics.log
 
       # ---------- Upload artefak APK ----------
       - name: Upload APK debug
@@ -124,6 +184,21 @@ jobs:
             gradle-debug-build.log
             gradle-release-build.log
             gradle-lint.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload log diagnostik setup (selalu diupload)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics
+          path: |
+            00-environment-info.log
+            01-sdk-licenses.log
+            02-install-gradle.log
+            03-verify-gradle.log
+            04-generate-wrapper.log
+            99-final-diagnostics.log
           if-no-files-found: ignore
           retention-days: 14
 
