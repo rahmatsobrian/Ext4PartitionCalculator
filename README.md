@@ -19,7 +19,7 @@ Fungsinya identik dengan versi web:
   Android 12+, fallback ke palet brand "KernelSU Clean Light" `#5672CD` di
   Android 10–11).
 - `minSdk 29` (Android 10) — `targetSdk`/`compileSdk 36` (Android 16).
-- AGP `8.10.0`, Kotlin `2.0.21`, Compose BOM `2024.12.01`.
+- AGP `8.10.0`, Kotlin `2.0.21`, Compose BOM `2024.12.01`, Gradle `8.11.1`.
 - Tidak ada dependency native/NDK, tidak ada font kustom (pakai font sistem)
   supaya build tetap ringan dan minim titik kegagalan.
 
@@ -30,7 +30,7 @@ tidak ada blob biner yang ikut ter-commit. Cara build lokal:
 
 ```bash
 # sekali saja, kalau belum punya Gradle terpasang di PATH:
-gradle wrapper --gradle-version 8.10.2 --distribution-type bin
+gradle wrapper --gradle-version 8.11.1 --distribution-type bin
 
 ./gradlew assembleDebug
 ```

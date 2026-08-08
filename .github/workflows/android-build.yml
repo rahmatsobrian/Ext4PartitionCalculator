@@ -15,7 +15,7 @@ on:
   workflow_dispatch: {}
 
 env:
-  GRADLE_VERSION: "8.10.2"
+  GRADLE_VERSION: "8.11.1"
   GRADLE_INSTALL_DIR: "/opt/gradle-cli"
 
 concurrency:
