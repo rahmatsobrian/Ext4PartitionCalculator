@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Tidak ada data pribadi yang perlu dikecualikan. -->
+    </cloud-backup>
+    <device-transfer>
+    </device-transfer>
+</data-extraction-rules>

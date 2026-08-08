@@ -1,0 +1,139 @@
+name: Android Build
+
+# Workflow ini SENGAJA tidak butuh repository secret apa pun:
+# - APK ditandatangani pakai debug keystore otomatis (dibuat sendiri oleh AGP saat build).
+# - Wrapper Gradle (termasuk gradle-wrapper.jar) di-generate sendiri di runner lewat
+#   `gradle wrapper`, bukan dari file biner yang di-commit ke repo.
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: {}
+
+env:
+  GRADLE_VERSION: "8.10.2"
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build debug & release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Accept Android SDK licenses
+        # Supaya AGP bisa auto-download platform/build-tools yang belum ada di runner.
+        run: |
+          set -e
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "Menggunakan Android SDK di: $SDK_ROOT"
+          CMDLINE_BIN=$(find "$SDK_ROOT/cmdline-tools" -maxdepth 2 -name "sdkmanager" -type f 2>/dev/null | head -n 1)
+          if [ -z "$CMDLINE_BIN" ]; then
+            echo "sdkmanager tidak ditemukan lewat cmdline-tools, coba fallback ke PATH"
+            CMDLINE_BIN="sdkmanager"
+          fi
+          yes | "$CMDLINE_BIN" --licenses > /dev/null || true
+          "$CMDLINE_BIN" --update || true
+
+      - name: Install Gradle ${{ env.GRADLE_VERSION }}
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+          cache-read-only: false
+
+      - name: Generate Gradle Wrapper (self-generated, tidak dari file yang di-commit)
+        run: |
+          set -e
+          gradle wrapper --gradle-version "${{ env.GRADLE_VERSION }}" --distribution-type bin
+          chmod +x ./gradlew
+          echo "Isi folder gradle/wrapper setelah digenerate:"
+          ls -la gradle/wrapper
+
+      - name: Show environment info (buat debug)
+        run: |
+          echo "== java -version =="
+          java -version
+          echo "== ./gradlew --version =="
+          ./gradlew --version
+          echo "== Android SDK packages terpasang =="
+          ls "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/platforms" || true
+
+      - name: Build debug APK (dengan logging lengkap)
+        id: build_debug
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleDebug \
+            --stacktrace --info --warning-mode all \
+            2>&1 | tee gradle-debug-build.log
+
+      - name: Build release APK (unsigned key -> pakai debug signing, tetap tanpa secret)
+        id: build_release
+        if: always() && steps.build_debug.outcome == 'success'
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleRelease \
+            --stacktrace --info --warning-mode all \
+            2>&1 | tee gradle-release-build.log
+
+      - name: Jalankan lint (opsional, membantu debug kualitas kode)
+        if: always()
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ./gradlew :app:lintDebug --stacktrace 2>&1 | tee gradle-lint.log
+
+      # ---------- Upload artefak APK ----------
+      - name: Upload APK debug
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload APK release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+          retention-days: 14
+
+      # ---------- Upload semua log & report untuk memudahkan debug ----------
+      - name: Upload log build (selalu diupload, sukses maupun gagal)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            gradle-debug-build.log
+            gradle-release-build.log
+            gradle-lint.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload Gradle & Lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-reports
+          path: |
+            app/build/reports/**
+            app/build/outputs/logs/**
+          if-no-files-found: ignore
+          retention-days: 14

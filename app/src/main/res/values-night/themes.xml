@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.Ext4Calc" parent="android:Theme.Material.NoActionBar" />
+</resources>

@@ -1,0 +1,4 @@
+<resources>
+    <!-- Tema dasar hanya dipakai sebelum Compose mengambil alih (mis. splash singkat). -->
+    <style name="Theme.Ext4Calc" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

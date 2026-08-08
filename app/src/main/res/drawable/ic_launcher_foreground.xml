@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Blok partisi bertumpuk, melambangkan pembagian ruang penyimpanan -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M28,34 h30 a6,6 0 0 1 6,6 v6 h-42 v-6 a6,6 0 0 1 6,-6 z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.95"
+        android:pathData="M22,50 h56 a4,4 0 0 1 4,4 v6 h-64 v-6 a4,4 0 0 1 4,-4 z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.85"
+        android:pathData="M18,64 h72 v6 a6,6 0 0 1 -6,6 h-60 a6,6 0 0 1 -6,-6 z" />
+</vector>
