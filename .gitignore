@@ -1,0 +1,21 @@
+*.iml
+.gradle/
+/local.properties
+.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Gradle wrapper sengaja TIDAK di-commit.
+# Wrapper (gradlew, gradlew.bat, gradle-wrapper.jar, gradle-wrapper.properties)
+# dibuat otomatis oleh GitHub Actions (lihat .github/workflows/android-build.yml)
+# supaya repo ini tidak menyimpan file biner gradle-wrapper.jar.
+gradle/wrapper/
+gradlew
+gradlew.bat
+
+app/build/
+app/release/
