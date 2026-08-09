@@ -15,12 +15,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -31,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.siroha.ext4calc.ui.components.SectionCard
 import com.siroha.ext4calc.ui.theme.MonoFont
@@ -61,6 +64,7 @@ fun ExportCard(
     SectionCard(
         title = "Export dynamic_partitions_op_list",
         subtitle = "Format siap tempel",
+        icon = Icons.Default.InsertDriveFile,
         modifier = modifier,
     ) {
         Spacer(Modifier.height(12.dp))
@@ -82,17 +86,21 @@ fun ExportCard(
 
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = { copyToClipboard(context, opListText) }) {
-                Icon(Icons.Default.ContentCopy, contentDescription = null)
+            Button(
+                onClick = { copyToClipboard(context, opListText) },
+                modifier = Modifier.weight(1f),
+            ) {
+                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Salin teks")
+                Text("Salin teks", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            OutlinedButton(onClick = {
-                saveFileLauncher.launch("dynamic_partitions_op_list.txt")
-            }) {
-                Icon(Icons.Default.Save, contentDescription = null)
+            OutlinedButton(
+                onClick = { saveFileLauncher.launch("dynamic_partitions_op_list.txt") },
+                modifier = Modifier.weight(1f),
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Simpan .txt")
+                Text("Simpan .txt", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

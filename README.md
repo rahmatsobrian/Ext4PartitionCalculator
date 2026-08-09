@@ -11,6 +11,8 @@ Fungsinya identik dengan versi web:
    progress bar + status OK/MELEBIHI BATAS.
 3. **Export** `dynamic_partitions_op_list` — salin ke clipboard atau simpan
    sebagai `.txt` lewat Storage Access Framework (tidak perlu izin storage).
+4. **Halaman About** — info aplikasi, teknologi yang dipakai, dan kredit,
+   diakses lewat ikon info di TopAppBar.
 
 ## Stack teknis
 

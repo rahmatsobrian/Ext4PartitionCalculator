@@ -14,9 +14,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CallSplit
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -25,6 +33,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -60,6 +69,7 @@ fun PartitionBudgetCard(
     SectionCard(
         title = "Budget Dynamic Partition Group",
         subtitle = "Boleh melebihi maksimal, tetap dihitung",
+        icon = Icons.Default.Storage,
         modifier = modifier,
     ) {
         Spacer(Modifier.height(14.dp))
@@ -72,13 +82,24 @@ fun PartitionBudgetCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Presets.all.forEach { preset ->
+                val selected = state.activePresetId == preset.id
                 FilterChip(
-                    selected = state.activePresetId == preset.id,
+                    selected = selected,
                     onClick = { state.applyPreset(preset) },
                     label = { Text(preset.label) },
+                    leadingIcon = if (selected) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize),
+                            )
+                        }
+                    } else null,
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.primary,
                         selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
                     ),
                 )
             }
@@ -171,12 +192,16 @@ fun PartitionBudgetCard(
                 onClick = state::addPartition,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("+ Tambah partisi", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Tambah partisi", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             OutlinedButton(
                 onClick = state::resetEditedFlags,
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
                 Text("Reset tanda \"diedit\"", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
@@ -211,10 +236,19 @@ private fun AllocatePanel(state: CalculatorState) {
             .padding(16.dp),
     ) {
         Column {
-            Text(
-                text = "Alokasikan sisa ruang (dari maksimal group)",
-                style = MaterialTheme.typography.labelLarge,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.CallSplit,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Alokasikan sisa ruang (dari maksimal group)",
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
             Spacer(Modifier.height(10.dp))
 
             ExposedDropdownMenuBox(
@@ -253,6 +287,8 @@ private fun AllocatePanel(state: CalculatorState) {
                 onClick = state::allocateRemaining,
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                Icon(Icons.Default.CallSplit, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
                 Text("Alokasikan sisa")
             }
 
