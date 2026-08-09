@@ -9,12 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.siroha.ext4calc.ui.theme.EditedBg
-import com.siroha.ext4calc.ui.theme.SirohaPrimary
-import com.siroha.ext4calc.ui.theme.StatusOkBg
-import com.siroha.ext4calc.ui.theme.StatusOkText
-import com.siroha.ext4calc.ui.theme.StatusWarnBg
-import com.siroha.ext4calc.ui.theme.StatusWarnText
+import com.siroha.ext4calc.ui.theme.statusColors
 
 enum class ChipTone { NEUTRAL, OK, WARN, EDITED }
 
@@ -24,11 +19,12 @@ fun StatusChip(
     tone: ChipTone = ChipTone.NEUTRAL,
     modifier: Modifier = Modifier,
 ) {
+    val status = statusColors()
     val (bg, fg) = when (tone) {
         ChipTone.NEUTRAL -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-        ChipTone.OK -> StatusOkBg to StatusOkText
-        ChipTone.WARN -> StatusWarnBg to StatusWarnText
-        ChipTone.EDITED -> EditedBg to SirohaPrimary
+        ChipTone.OK -> status.okBg to status.okText
+        ChipTone.WARN -> status.warnBg to status.warnText
+        ChipTone.EDITED -> status.editedBg to MaterialTheme.colorScheme.primary
     }
     Text(
         text = text,

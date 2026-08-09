@@ -25,12 +25,20 @@ val SirohaOutline = Color(0xFFE5E7EB)
 val SirohaError = Color(0xFFD92D20)
 val SirohaOnError = Color(0xFFFFFFFF)
 
-// Warna status tambahan yang dipakai langsung di komponen (bukan lewat ColorScheme M3)
-val StatusOkText = Color(0xFF1A7F4E)
-val StatusOkBg = Color(0xFFE6F4EC)
-val StatusWarnText = Color(0xFFB7791F)
-val StatusWarnBg = Color(0xFFFDF3E1)
-val EditedBg = Color(0xFFEAEEFB)
+// Warna status (light) — dipakai lewat StatusColors, bukan langsung, supaya otomatis
+// ganti ke varian dark saat dark theme aktif (lihat StatusColors.kt).
+val StatusOkTextLight = Color(0xFF1A7F4E)
+val StatusOkBgLight = Color(0xFFE6F4EC)
+val StatusWarnTextLight = Color(0xFFB7791F)
+val StatusWarnBgLight = Color(0xFFFDF3E1)
+val EditedBgLight = Color(0xFFEAEEFB)
+
+// Warna status (dark)
+val StatusOkTextDark = Color(0xFF8FDDB0)
+val StatusOkBgDark = Color(0xFF163B2C)
+val StatusWarnTextDark = Color(0xFFF3C368)
+val StatusWarnBgDark = Color(0xFF3D3116)
+val EditedBgDark = Color(0xFF2E3A5C)
 
 // Palet gelap
 val SirohaPrimaryDark = Color(0xFFAEC0F5)

@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import com.siroha.ext4calc.model.Partition
 import com.siroha.ext4calc.ui.components.ChipTone
 import com.siroha.ext4calc.ui.components.StatusChip
-import com.siroha.ext4calc.ui.theme.EditedBg
 import com.siroha.ext4calc.ui.theme.MonoFont
+import com.siroha.ext4calc.ui.theme.statusColors
 import com.siroha.ext4calc.util.ByteUtils
 
 @Composable
@@ -51,11 +51,12 @@ fun PartitionItemCard(
     modifier: Modifier = Modifier,
 ) {
     var addMbInput by remember { mutableStateOf("") }
+    val status = statusColors()
 
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (partition.edited) EditedBg else MaterialTheme.colorScheme.surface
+            containerColor = if (partition.edited) status.editedBg else MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
             1.dp,

@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.siroha.ext4calc.model.ALLOCATE_SPLIT
 import com.siroha.ext4calc.model.CalculatorState
@@ -47,6 +48,7 @@ import com.siroha.ext4calc.ui.components.ChipTone
 import com.siroha.ext4calc.ui.components.SectionCard
 import com.siroha.ext4calc.ui.components.StatusChip
 import com.siroha.ext4calc.ui.theme.MonoFont
+import com.siroha.ext4calc.ui.theme.statusColors
 import com.siroha.ext4calc.util.ByteUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -161,12 +163,21 @@ fun PartitionBudgetCard(
         }
 
         Spacer(Modifier.height(14.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(onClick = state::addPartition) {
-                Text("+ Tambah partisi")
+        // Ditumpuk vertikal (bukan Row) supaya teks tombol yang lebih panjang
+        // ("Reset tanda \"diedit\"") tidak berebut ruang dengan tombol sebelahnya
+        // dan ke-wrap jadi 2 baris yang bikin tinggi tombol nggak sama.
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(
+                onClick = state::addPartition,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("+ Tambah partisi", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            OutlinedButton(onClick = state::resetEditedFlags) {
-                Text("Reset tanda \"diedit\"")
+            OutlinedButton(
+                onClick = state::resetEditedFlags,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Reset tanda \"diedit\"", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
 
@@ -263,6 +274,7 @@ private fun SummarySection(state: CalculatorState) {
     val remaining = state.remainingBytes
     val over = state.isOverBudget
 
+    val status = statusColors()
     Column {
         SummaryRow(
             label = "Total terpakai",
@@ -277,7 +289,7 @@ private fun SummarySection(state: CalculatorState) {
                 .fillMaxWidth()
                 .height(10.dp)
                 .clip(RoundedCornerShape(50)),
-            color = if (over) com.siroha.ext4calc.ui.theme.StatusWarnText else MaterialTheme.colorScheme.primary,
+            color = if (over) status.warnText else MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.secondaryContainer,
         )
         Spacer(Modifier.height(10.dp))
@@ -286,7 +298,7 @@ private fun SummarySection(state: CalculatorState) {
             value = "${ByteUtils.formatThousands(remaining)} B (${
                 ByteUtils.formatDecimal(remaining / 1_000_000.0, 2)
             } MB)",
-            valueColor = if (over) com.siroha.ext4calc.ui.theme.StatusWarnText else MaterialTheme.colorScheme.onSurface,
+            valueColor = if (over) status.warnText else MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.height(10.dp))
         Row(
@@ -311,7 +323,7 @@ private fun SummarySection(state: CalculatorState) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(com.siroha.ext4calc.ui.theme.StatusWarnBg)
+                    .background(status.warnBg)
                     .padding(14.dp),
             ) {
                 Text(
@@ -319,7 +331,7 @@ private fun SummarySection(state: CalculatorState) {
                         "tapi kemungkinan besar super partition tidak akan cukup — pertimbangkan " +
                         "repartisi atau kecilkan salah satu partisi.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = com.siroha.ext4calc.ui.theme.StatusWarnText,
+                    color = status.warnText,
                 )
             }
         }
