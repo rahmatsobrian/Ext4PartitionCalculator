@@ -221,7 +221,7 @@ private fun AllocatePanel(state: CalculatorState) {
                         .menuAnchor(),
                     textStyle = MaterialTheme.typography.bodyMedium,
                 )
-                androidx.compose.material3.ExposedDropdownMenu(
+                ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
                 ) {
