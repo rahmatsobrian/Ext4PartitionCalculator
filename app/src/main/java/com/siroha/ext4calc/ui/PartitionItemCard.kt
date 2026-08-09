@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -20,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.siroha.ext4calc.model.Partition
 import com.siroha.ext4calc.ui.components.ChipTone
@@ -136,29 +137,38 @@ fun PartitionItemCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(4.dp))
+            OutlinedTextField(
+                value = addMbInput,
+                onValueChange = { addMbInput = ByteUtils.cleanDigits(it) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                placeholder = { Text("cth: 50") },
+                textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = MonoFont),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            )
+            Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = addMbInput,
-                    onValueChange = { addMbInput = ByteUtils.cleanDigits(it) },
+                OutlinedButton(
+                    onClick = {
+                        val mbVal = addMbInput.toLongOrNull() ?: 0L
+                        if (mbVal > 0) onAddMb(mbVal)
+                    },
                     modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    placeholder = { Text("cth: 50") },
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = MonoFont),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                )
-                Spacer(Modifier.width(8.dp))
-                OutlinedButton(onClick = {
-                    val mbVal = addMbInput.toLongOrNull() ?: 0L
-                    if (mbVal > 0) onAddMb(mbVal)
-                }) {
-                    Text("+ Tambah")
+                ) {
+                    Text("+ Tambah", maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Spacer(Modifier.width(8.dp))
-                TextButton(onClick = {
-                    val mbVal = addMbInput.toLongOrNull() ?: 0L
-                    if (mbVal > 0) onSubtractMb(mbVal)
-                }) {
-                    Text("− Kurangi", color = MaterialTheme.colorScheme.error)
+                OutlinedButton(
+                    onClick = {
+                        val mbVal = addMbInput.toLongOrNull() ?: 0L
+                        if (mbVal > 0) onSubtractMb(mbVal)
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text("− Kurangi", maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
